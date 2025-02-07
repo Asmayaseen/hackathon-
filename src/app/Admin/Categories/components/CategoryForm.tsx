@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { client } from '@/sanity/lib/client'; // Make sure you import your Sanity client
+import { client } from '@/sanity/lib/client';
 
 interface Category {
   _id?: string;
@@ -21,81 +21,68 @@ export default function Form() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const categoryId = params.get('id');
-      setId(categoryId);
+      if (categoryId) setId(categoryId);
     }
   }, []);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (id) {
-        try {
+      try {
+        if (id) {
           const category = await client.fetch(
             `*[_type == "category" && _id == $id][0]`,
             { id }
           );
-          setData(category || { name: '', slug: '' });
-        } catch (error) {
-          console.error('Error fetching category:', error);
+          if (category) setData(category);
         }
+      } catch (error) {
+        console.error('Error fetching category:', error);
       }
     };
 
-    if (id) {
-      fetchData();
-    }
+    if (id) fetchData();
   }, [id]);
 
   // ✅ Auto-generate slug from name
   const handleData = (key: string, value: string) => {
-    setData((prevData) => {
-      const updatedData = { ...prevData, [key]: value };
-      if (key === 'name') {
-        updatedData.slug = value.toLowerCase().replace(/\s+/g, '-');
+    setData((prevData) => ({
+      ...prevData,
+      [key]: value,
+      ...(key === 'name' && { slug: value.toLowerCase().replace(/\s+/g, '-') }),
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!data.name || !data.slug) {
+      alert('All fields are required!');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      if (id) {
+        await client.patch(id).set({ name: data.name, slug: data.slug }).commit();
+      } else {
+        await client.create({
+          _type: 'category',
+          name: data.name,
+          slug: data.slug,
+        });
+        setData({ name: '', slug: '' });
       }
-      return updatedData;
-    });
-  };
-
-  const handleCreate = async () => {
-    if (!data.name || !data.slug) return alert('All fields are required!');
-    setIsLoading(true);
-    try {
-      await client.create({
-        _type: 'category',
-        name: data.name,
-        slug: data.slug,
-      });
-      setData({ name: '', slug: '' });
       router.push('/Admin/Categories');
     } catch (error) {
-      console.error('Error creating category:', error);
+      console.error('Error processing category:', error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  };
-
-  const handleUpdate = async () => {
-    if (!id) return;
-    if (!data.name || !data.slug) return alert('All fields are required!');
-    setIsLoading(true);
-    try {
-      await client.patch(id).set({ name: data.name, slug: data.slug }).commit();
-      router.push('/Admin/Categories');
-    } catch (error) {
-      console.error('Error updating category:', error);
-    }
-    setIsLoading(false);
   };
 
   return (
     <div className="flex flex-col gap-3 bg-white rounded-xl p-5 w-full md:w-[400px]">
       <h1 className="font-semibold">{id ? 'Update' : 'Create'} Category</h1>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          id ? handleUpdate() : handleCreate();
-        }}
-        className="flex flex-col gap-3"
-      >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
           <label htmlFor="category-name" className="text-gray-500 text-sm">
             Name <span className="text-red-500">*</span>
