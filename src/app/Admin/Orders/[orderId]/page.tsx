@@ -10,8 +10,14 @@ interface Order {
   total: number;
   paymentMethod: string;
   status?: string;
-  shippingAddress: string;
-  products: {
+  shippingAddress?: {
+    streetAddress: string;
+    city: string;
+    zipCode: string;
+    phone: string;
+    email: string;
+  };
+  products?: {
     productTitle: string;
     price: number;
     quantity: number;
@@ -52,7 +58,7 @@ export default function Page() {
       </div>
     );
   }
-  
+
   if (error) {
     return <p className="text-red-500">{error}</p>;
   }
@@ -79,20 +85,44 @@ export default function Page() {
           </div>
         </div>
         <div className="flex flex-col gap-3">
-          {order.products.map((product, index) => (
+          {/* Check if order.products exists before mapping */}
+          {(order?.products ?? []).map((product, index) => (
             <div key={index} className="flex gap-2 items-center">
               <h1>{product.productTitle}</h1>
               <h1 className="text-gray-500 text-xs">
-              &#163; {product.price} <span>X</span> <span>{product.quantity}</span>
+                &#163; {product.price} <span>X</span> <span>{product.quantity}</span>
               </h1>
             </div>
           ))}
         </div>
       </div>
 
-      <h1 className="text-2xl font-semibold">Shipping Address</h1>
+      <h1 className="text-2xl font-semibold">Address</h1>
       <div className="flex flex-col gap-2 border rounded-lg p-4 bg-white">
-        <p>{order.shippingAddress}</p>
+        <table>
+          <tbody>
+            <tr>
+              <td>Street Address</td>
+              <td>{order?.shippingAddress?.streetAddress || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>City</td>
+              <td>{order?.shippingAddress?.city || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>Zip Code</td>
+              <td>{order?.shippingAddress?.zipCode || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>Phone</td>
+              <td>{order?.shippingAddress?.phone || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>Email</td>
+              <td>{order?.shippingAddress?.email || "N/A"}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </main>
   );

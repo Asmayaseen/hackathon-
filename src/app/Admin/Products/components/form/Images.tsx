@@ -2,13 +2,15 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { ProductData } from './BasicDetails'; // ✅ Ensure correct import
 
 interface ImagesProps {
+  data: ProductData; // ✅ Add this if data is needed
   featureImage: string | null;
   setFeatureImage: (imageId: string | null) => void;
 }
 
-export default function Images({ featureImage, setFeatureImage }: ImagesProps) {
+export default function Images({ data, featureImage, setFeatureImage }: ImagesProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(featureImage);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

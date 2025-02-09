@@ -4,23 +4,20 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { client } from "@/sanity/lib/client";
 
-// ✅ Define Order Type
+// ✅ Define the Order Type
 interface Order {
   _id: string;
-  orderId: string;
   total: number;
   paymentMethod: string;
-  customerInfo?: { // ✅ Optional for safer rendering
-    name?: string;
-    contact?: string;
-  };
-  orderDetails: { productId: string; quantity: number; size: number; color: string }[];
+  customerName: string;
+  customerEmail: string;
+  products: { productTitle: string; price: number; quantity: number }[];
 }
 
 export default function ListView() {
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]); // ✅ Specify Order[] type
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [pageLimit, setPageLimit] = useState(10);
 
   useEffect(() => {
@@ -28,25 +25,21 @@ export default function ListView() {
       try {
         const query = `*[_type == "order"]{
           _id,
-          orderId,
           total,
           paymentMethod,
-          customerInfo {
-            name,
-            contact
-          },
-          orderDetails[] {
-            productId,
-            quantity,
-            size,
-            color
+          "customerName": customer->name,
+          "customerEmail": customer->email,
+          products[] {
+            productTitle,
+            price,
+            quantity
           }
         } | order(_createdAt desc) [0...$pageLimit]`;
 
-        const data: Order[] = await client.fetch(query, { pageLimit });
+        const data: Order[] = await client.fetch(query, { pageLimit }); 
         setOrders(data);
       } catch (err) {
-        setError("Failed to load orders. Please try again.");
+        setError(err as Error);
       } finally {
         setIsLoading(false);
       }
@@ -69,28 +62,24 @@ export default function ListView() {
         <h1 className="text-xl font-semibold">Orders</h1>
       </div>
 
-      {error ? (
-        <div className="text-red-500 text-center">{error}</div>
-      ) : (
-        <div className="flex-1 flex flex-col gap-3 md:pr-5 md:px-0 px-5 rounded-xl w-full overflow-x-auto">
-          <table className="border-collapse w-full bg-white shadow-lg">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="font-semibold py-2 px-3 border text-left">SN</th>
-                <th className="font-semibold py-2 px-3 border text-left">Customer</th>
-                <th className="font-semibold py-2 px-3 border text-left">Total Price</th>
-                <th className="font-semibold py-2 px-3 border text-left">Payment Mode</th>
-                <th className="font-semibold py-2 px-3 border text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {orders.map((item, index) => (
-                <Row key={item._id} index={index + 1} item={item} />
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <div className="flex-1 flex flex-col gap-3 md:pr-5 md:px-0 px-5 rounded-xl w-full overflow-x-auto">
+        <table className="border-collapse w-full bg-white shadow-lg">
+          <thead>
+            <tr className="bg-gray-200">
+              <th className="font-semibold py-2 px-3 border text-left">SN</th>
+              <th className="font-semibold py-2 px-3 border text-left">Customer</th>
+              <th className="font-semibold py-2 px-3 border text-left">Total Price</th>
+              <th className="font-semibold py-2 px-3 border text-left">Payment Mode</th>
+              <th className="font-semibold py-2 px-3 border text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orders?.map((item, index) => (
+              <Row key={item._id} index={index + 1} item={item} />
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {/* Pagination */}
       <div className="flex justify-between text-sm py-3">
@@ -112,15 +101,15 @@ export default function ListView() {
   );
 }
 
-// ✅ Fixed Row Component
+// ✅ Fix Row Component Type Definition
 function Row({ item, index }: { item: Order; index: number }) {
   return (
     <tr className="border-b hover:bg-gray-100">
       <td className="py-2 px-3 border text-center">{index}</td>
       <td className="py-2 px-3 border">
         <div>
-          <h1 className="font-medium">{item.customerInfo?.name || "Unknown"}</h1>
-          <h1 className="text-xs text-gray-600">{item.customerInfo?.contact || "No Contact"}</h1>
+          <h1 className="font-medium">{item.customerName}</h1>
+          <h1 className="text-xs text-gray-600">{item.customerEmail}</h1>
         </div>
       </td>
       <td className="py-2 px-3 border"> &#163;{item.total}</td>
