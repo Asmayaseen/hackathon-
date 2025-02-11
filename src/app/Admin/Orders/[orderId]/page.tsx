@@ -85,15 +85,18 @@ export default function Page() {
           </div>
         </div>
         <div className="flex flex-col gap-3">
-          {/* Check if order.products exists before mapping */}
-          {(order?.products ?? []).map((product, index) => (
-            <div key={index} className="flex gap-2 items-center">
-              <h1>{product.productTitle}</h1>
-              <h1 className="text-gray-500 text-xs">
-                &#163; {product.price} <span>X</span> <span>{product.quantity}</span>
-              </h1>
-            </div>
-          ))}
+          {(order.products && order.products.length > 0) ? (
+            order.products.map((product, index) => (
+              <div key={index} className="flex gap-2 items-center">
+                <h1>{product.productTitle}</h1>
+                <h1 className="text-gray-500 text-xs">
+                  &#163; {product.price} <span>X</span> <span>{product.quantity}</span>
+                </h1>
+              </div>
+            ))
+          ) : (
+            <p className="text-gray-500">No products found.</p>
+          )}
         </div>
       </div>
 
@@ -103,23 +106,23 @@ export default function Page() {
           <tbody>
             <tr>
               <td>Street Address</td>
-              <td>{order?.shippingAddress?.streetAddress || "N/A"}</td>
+              <td>{order.shippingAddress?.streetAddress || "N/A"}</td>
             </tr>
             <tr>
               <td>City</td>
-              <td>{order?.shippingAddress?.city || "N/A"}</td>
+              <td>{order.shippingAddress?.city || "N/A"}</td>
             </tr>
             <tr>
               <td>Zip Code</td>
-              <td>{order?.shippingAddress?.zipCode || "N/A"}</td>
+              <td>{order.shippingAddress?.zipCode || "N/A"}</td>
             </tr>
             <tr>
               <td>Phone</td>
-              <td>{order?.shippingAddress?.phone || "N/A"}</td>
+              <td>{order.shippingAddress?.phone || "N/A"}</td>
             </tr>
             <tr>
               <td>Email</td>
-              <td>{order?.shippingAddress?.email || "N/A"}</td>
+              <td>{order.shippingAddress?.email || "N/A"}</td>
             </tr>
           </tbody>
         </table>

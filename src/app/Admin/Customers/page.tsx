@@ -7,32 +7,27 @@ interface Customer {
   _id: string;
   name: string;
   email: string;
-  contactInfo: string;
+  contactInfo?: string;
 }
 
 export default function ListView() {
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const GetCustomers = async () => {
+    const getCustomers = async () => {
       try {
-        const query = `*[_type == "customer"]{ 
-          _id,
-          name,
-          email,
-          contactInfo
-        }`;
-        const fetchedCustomers = await client.fetch(query);
+        const query = `*[_type == "customer"]{ _id, name, email, contactInfo }`;
+        const fetchedCustomers: Customer[] = await client.fetch(query);
         setCustomers(fetchedCustomers);
-      } catch (error) {
-        setError(error as Error);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An unknown error occurred");
       }
     };
-    GetCustomers();
+    getCustomers();
   }, []);
 
-  if (error) return <div>{error.message || "An unknown error occurred"}</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
 
   return (
     <main className="flex flex-col gap-4 p-5">
@@ -50,8 +45,8 @@ export default function ListView() {
             </tr>
           </thead>
           <tbody>
-            {customers?.map((item, index) => (
-              <Row index={index} item={item} key={item._id} />
+            {customers.map((customer, index) => (
+              <Row key={customer._id} index={index} customer={customer} />
             ))}
           </tbody>
         </table>
@@ -60,14 +55,14 @@ export default function ListView() {
   );
 }
 
-function Row({ item, index }: { item: Customer; index: number }) {
+function Row({ customer, index }: { customer: Customer; index: number }) {
   return (
     <tr className="bg-white border-b">
       <td className="border-y bg-white px-3 py-2 border-l rounded-l-lg text-center">{index + 1}</td>
-      <td className="border-y bg-white px-3 py-2">{item?.name}</td>
-      <td className="border-y bg-white px-3 py-2">{item?.email}</td>
+      <td className="border-y bg-white px-3 py-2">{customer.name}</td>
+      <td className="border-y bg-white px-3 py-2">{customer.email}</td>
       <td className="border-y bg-white px-3 py-2 border-r rounded-r-lg text-center">
-        {item?.contactInfo || "N/A"}
+        {customer.contactInfo || "N/A"}
       </td>
     </tr>
   );
